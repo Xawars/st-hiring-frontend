@@ -1,7 +1,11 @@
 import type { Settings } from '../types/settings.ts';
 
-export const getSettings = async (): Promise<Settings> => {
+export const getSettings = async (): Promise<Settings | null> => {
   const response = await fetch('/settings');
+
+  if (response.status === 404) {
+    return null;
+  }
 
   if (!response.ok) {
     throw new Error(`Failed to fetch settings: ${response.status}`);

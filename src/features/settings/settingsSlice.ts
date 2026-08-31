@@ -5,6 +5,7 @@ import type { Settings } from '../../types/settings.ts';
 
 export interface SettingsState {
   settings: Settings | null;
+  missing: boolean;
   loading: boolean;
   error: string | null;
   saving: boolean;
@@ -14,6 +15,7 @@ export interface SettingsState {
 
 const initialState: SettingsState = {
   settings: null,
+  missing: false,
   loading: false,
   error: null,
   saving: false,
@@ -21,7 +23,7 @@ const initialState: SettingsState = {
   saveSuccess: false,
 };
 
-export const fetchSettings: AsyncThunk<Settings, void, object> = createAsyncThunk(
+export const fetchSettings: AsyncThunk<Settings | null, void, object> = createAsyncThunk(
   'settings/fetchSettings',
   async () => {
     return getSettings();
@@ -48,10 +50,12 @@ const settingsSlice = createSlice({
       .addCase(fetchSettings.fulfilled, (state, action) => {
         state.loading = false;
         state.settings = action.payload;
+        state.missing = action.payload === null;
         state.error = null;
       })
       .addCase(fetchSettings.rejected, (state, action) => {
         state.loading = false;
+        state.missing = false;
         state.error = action.error.message ?? 'Failed to fetch settings';
       })
       .addCase(saveSettings.pending, (state) => {
@@ -63,6 +67,7 @@ const settingsSlice = createSlice({
         state.saving = false;
         state.saveError = null;
         state.saveSuccess = true;
+        state.missing = false;
         state.settings = action.payload;
       })
       .addCase(saveSettings.rejected, (state, action) => {

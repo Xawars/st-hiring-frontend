@@ -23,14 +23,32 @@ const settingsSchema = Yup.object({
   maintenanceMode: Yup.boolean().required(),
 });
 
+const emptySettings: Settings = {
+  siteName: '',
+  contactEmail: '',
+  maintenanceMode: false,
+};
+
 export default function SettingsForm() {
   const dispatch = useDispatch<AppDispatch>();
   const settings = useSelector((state: RootState) => state.settings.settings);
+  const missing = useSelector((state: RootState) => state.settings.missing);
+  const error = useSelector((state: RootState) => state.settings.error);
   const saving = useSelector((state: RootState) => state.settings.saving);
   const saveSuccess = useSelector((state: RootState) => state.settings.saveSuccess);
   const saveError = useSelector((state: RootState) => state.settings.saveError);
 
-  if (!settings) {
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
+        <Alert severity="error" sx={{ overflowWrap: 'anywhere' }}>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (!settings && !missing) {
     return null;
   }
 
@@ -45,6 +63,11 @@ export default function SettingsForm() {
         >
           Settings
         </Typography>
+        {missing && (
+          <Alert severity="info" sx={{ mb: { xs: 2, sm: 3 } }}>
+            No settings have been configured yet.
+          </Alert>
+        )}
         {saveSuccess && (
           <Alert severity="success" sx={{ mb: { xs: 2, sm: 3 } }}>
             Settings saved successfully.
@@ -56,7 +79,7 @@ export default function SettingsForm() {
           </Alert>
         )}
         <Formik<Settings>
-          initialValues={settings}
+          initialValues={settings ?? emptySettings}
           validationSchema={settingsSchema}
           onSubmit={async (values) => {
             await dispatch(saveSettings(values));
